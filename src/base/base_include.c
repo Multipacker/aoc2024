@@ -1,0 +1,8 @@
+#include "base_types.c"
+#include "base_vector.c"
+#include "base_memory.c"
+#include "base_string.c"
+#include "base_context.c"
+#include "base_hash.c"
+#include "base_color.c"
+#include "os_include.c"
