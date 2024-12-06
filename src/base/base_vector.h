@@ -340,6 +340,7 @@ internal R2S32 r2s32_pad(R2S32 range, S32 pad);
 internal V2S32 r2s32_size(R2S32 range);
 
 internal R2S64 r2s64(S64 min_x, S64 min_y, S64 max_x, S64 max_y);
+internal B32   r2s64_contains(R2S64 bounds, V2S64 point);
 internal R2S64 r2s64_pad(R2S64 range, S64 pad);
 internal V2S64 r2s64_size(R2S64 range);
 
