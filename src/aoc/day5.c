@@ -35,10 +35,34 @@ struct U64Array {
     U64 size;
 };
 
+typedef struct U64ArrayNode U64ArrayNode;
+struct U64ArrayNode {
+    U64ArrayNode *next;
+    U64Array value;
+};
+
+typedef struct U64ArrayList U64ArrayList;
+struct U64ArrayList {
+    U64ArrayNode *first;
+    U64ArrayNode *last;
+};
+
 typedef struct U64Tuple U64Tuple;
 struct U64Tuple {
     U64 a;
     U64 b;
+};
+
+typedef struct U64TupleNode U64TupleNode;
+struct U64TupleNode {
+    U64TupleNode *next;
+    U64Tuple value;
+};
+
+typedef struct U64TupleList U64TupleList;
+struct U64TupleList {
+    U64TupleNode *first;
+    U64TupleNode *last;
 };
 
 internal Void day5_solve(Void) {
@@ -48,61 +72,38 @@ internal Void day5_solve(Void) {
     os_file_read(arena, str8_literal("data/day5.txt"), &data);
 
     // NOTE(simon): Parse
-    Str8List lines = str8_split_by_codepoints(arena, data, str8_literal("\n"));
-
-    Str8List rule_nodes = { 0 };
-    Str8List update_nodes = { 0 };
+    U64TupleList rules = { 0 };
+    U64ArrayList updates = { 0 };
 
     B32 is_updates = false;
-    for (Str8Node *node = lines.first; node; node = node->next) {
+    for (Str8Node *node = str8_split_by_codepoints(arena, data, str8_literal("\n")).first; node; node = node->next) {
+        Arena_Temporary scratch = arena_get_scratch(0, 0);
         if (node->string.size == 0) {
             is_updates = true;
         } else if (is_updates) {
-            str8_list_push(arena, &update_nodes, node->string);
+            Str8List page_nodes = str8_split_by_codepoints(scratch.arena, node->string, str8_literal(","));
+
+            U64ArrayNode *pages = arena_push_struct_zero(arena, U64ArrayNode);
+            pages->value.data = arena_push_array(arena, U64, page_nodes.node_count);
+            for (Str8Node *page_node = page_nodes.first; page_node; page_node = page_node->next) {
+                pages->value.data[pages->value.size++] = u64_from_str8(page_node->string).value;
+            }
+
+            sll_queue_push(updates.first, updates.last, pages);
         } else {
-            str8_list_push(arena, &rule_nodes, node->string);
+            U64TupleNode *rule = arena_push_struct_zero(arena, U64TupleNode);
+            Str8List parts = str8_split_by_codepoints(scratch.arena, node->string, str8_literal("|"));
+            rule->value.a = u64_from_str8(parts.first->string).value;
+            rule->value.b = u64_from_str8(parts.last->string).value;
+            sll_queue_push(rules.first, rules.last, rule);
         }
-    }
-
-    U64Tuple *rules = arena_push_array(arena, U64Tuple, rule_nodes.node_count);
-    U64 rule_count = 0;
-    for (Str8Node *node = rule_nodes.first; node; node = node->next) {
-        Str8 rule = node->string;
-        U64Parse a = u64_from_str8(rule);
-        U64Parse b = u64_from_str8(str8_skip(rule, a.size + 1));
-        rules[rule_count].a = a.value;
-        rules[rule_count].b = b.value;
-        ++rule_count;
-    }
-
-    U64Array *updates = arena_push_array(arena, U64Array, update_nodes.node_count);
-    U64 update_count = 0;
-    for (Str8Node *update = update_nodes.first; update; update = update->next) {
-        Arena_Temporary scratch = arena_get_scratch(0, 0);
-        Str8List page_nodes = str8_split_by_codepoints(scratch.arena, update->string, str8_literal(","));
-
-        U64Array pages = { 0 };
-        pages.data = arena_push_array(arena, U64, page_nodes.node_count);
-        for (Str8Node *page_node = page_nodes.first; page_node; page_node = page_node->next) {
-            U64Parse page = u64_from_str8(page_node->string);
-            pages.data[pages.size] = page.value;
-            ++pages.size;
-        }
-
-        updates[update_count] = pages;
-        ++update_count;
-
         arena_end_temporary(scratch);
     }
 
-
-    // NOTE(simon): Part 1
     U64 correct_middle_sum = 0;
     U64 incorrect_middle_sum = 0;
-    for (U64 update_index = 0; update_index < update_count; ++update_index) {
-        Arena_Temporary scratch = arena_get_scratch(0, 0);
-
-        U64Array pages = updates[update_index];
+    for (U64ArrayNode *page_node = updates.first; page_node; page_node = page_node->next) {
+        U64Array pages = page_node->value;
 
         B32 is_ordered = true;
         for (U64 i = 1; i < pages.size; ++i) {
@@ -110,17 +111,13 @@ internal Void day5_solve(Void) {
                 U64 a = pages.data[j - 1];
                 U64 b = pages.data[j - 0];
 
-                for (U64 k = 0; k < rule_count; ++k) {
-                    U64Tuple rule = rules[k];
-                    if (rule.a == a && rule.b == b) {
-                        break;
-                    } else if (rule.a == b && rule.b == a) {
+                for (U64TupleNode *rule = rules.first; rule; rule = rule->next) {
+                    if (rule->value.a == b && rule->value.b == a) {
                         swap(pages.data[j - 1], pages.data[j], U64);
                         is_ordered = false;
                     }
                 }
             }
-
         }
 
         if (is_ordered) {
@@ -128,8 +125,6 @@ internal Void day5_solve(Void) {
         } else {
             incorrect_middle_sum += pages.data[pages.size / 2];
         }
-
-        arena_end_temporary(scratch);
     }
 
     os_console_print(str8_format(arena, "Part 1: %lu\n", correct_middle_sum));
