@@ -10,6 +10,30 @@ global Str8 day7_example = str8_literal(
     "292: 11 6 16 20\n"
 );
 
+internal U64 day7_iterate0(U64 accumulator, U64Array equation, U64 index) {
+    if (index == equation.size) {
+        return accumulator == equation.data[0];
+    }
+
+    return day7_iterate0(accumulator + equation.data[index], equation, index + 1) ||
+        day7_iterate0(accumulator * equation.data[index], equation, index + 1);
+}
+
+internal U64 day7_iterate1(U64 accumulator, U64Array equation, U64 index) {
+    if (index == equation.size) {
+        return accumulator == equation.data[0];
+    }
+
+    U64 factor = 1;
+    while (factor <= equation.data[index]) {
+        factor *= 10;
+    }
+
+    return day7_iterate1(accumulator + equation.data[index], equation, index + 1) ||
+        day7_iterate1(accumulator * equation.data[index], equation, index + 1) ||
+        day7_iterate1(accumulator * factor + equation.data[index], equation, index + 1);
+}
+
 internal Void day7_solve(Void) {
     Arena *arena = arena_create();
 
@@ -47,47 +71,12 @@ internal Void day7_solve(Void) {
     for (U64ArrayNode *equation_node = equations.first; equation_node; equation_node = equation_node->next) {
         U64Array equation = equation_node->value;
 
-        for (U64 i = 0; i < 1 << (equation.size - 2); ++i) {
-            U64 result = equation.data[1];
-
-            for (U64 j = 2; j < equation.size && result <= equation.data[0]; ++j) {
-                if ((i >> (j - 2)) & 0x01) {
-                    result += equation.data[j];
-                } else {
-                    result *= equation.data[j];
-                }
-            }
-
-            if (result == equation.data[0]) {
-                sum0 += result;
-                break;
-            }
+        if (day7_iterate0(equation.data[1], equation, 2)) {
+            sum0 += equation.data[0];
         }
 
-        for (U64 i = 0; i < 1 << 2 * (equation.size - 2); ++i) {
-            U64 result = equation.data[1];
-
-            for (U64 j = 2; j < equation.size && result <= equation.data[0]; ++j) {
-                if (((i >> 2 * (j - 2)) & 0x03) == 0) {
-                    result += equation.data[j];
-                } else if (((i >> 2 * (j - 2)) & 0x03) == 1) {
-                    result *= equation.data[j];
-                } else if (((i >> 2 * (j - 2)) & 0x03) == 2) {
-                    U64 factor = 1;
-                    while (factor <= equation.data[j]) {
-                        factor *= 10;
-                    }
-                    result = result * factor + equation.data[j];
-                } else {
-                    result = 0;
-                    break;
-                }
-            }
-
-            if (result == equation.data[0]) {
-                sum1 += result;
-                break;
-            }
+        if (day7_iterate1(equation.data[1], equation, 2)) {
+            sum1 += equation.data[0];
         }
     }
 
