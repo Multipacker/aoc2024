@@ -47,38 +47,48 @@ internal Void day7_solve(Void) {
     for (U64ArrayNode *equation_node = equations.first; equation_node; equation_node = equation_node->next) {
         U64Array equation = equation_node->value;
 
-        U64 correct0 = 0;
-        U64 correct1 = 0;
-        for (U64 i = 0; i < 1 << 2 * (equation.size - 2) && (correct0 == 0 || correct1 == 0); ++i) {
-            U64 result0 = equation.data[1];
-            U64 result1 = equation.data[1];
+        for (U64 i = 0; i < 1 << (equation.size - 2); ++i) {
+            U64 result = equation.data[1];
 
-            for (U64 j = 2; j < equation.size; ++j) {
-                if (((i >> 2 * (j - 2)) & 0x03) == 0) {
-                    result0 += equation.data[j];
-                    result1 += equation.data[j];
-                } else if (((i >> 2 * (j - 2)) & 0x03) == 1) {
-                    result0 *= equation.data[j];
-                    result1 *= equation.data[j];
+            for (U64 j = 2; j < equation.size && result <= equation.data[0]; ++j) {
+                if ((i >> (j - 2)) & 0x01) {
+                    result += equation.data[j];
                 } else {
-                    for (U64 k = equation.data[j]; k; k /= 10) {
-                        result1 *= 10;
-                    }
-                    result1 += equation.data[j];
+                    result *= equation.data[j];
                 }
             }
 
-            if (result0 == equation.data[0]) {
-                correct0 = result0;
-            }
-
-            if (result1 == equation.data[0]) {
-                correct1 = result1;
+            if (result == equation.data[0]) {
+                sum0 += result;
+                break;
             }
         }
 
-        sum0 += correct0;
-        sum1 += correct1;
+        for (U64 i = 0; i < 1 << 2 * (equation.size - 2); ++i) {
+            U64 result = equation.data[1];
+
+            for (U64 j = 2; j < equation.size && result <= equation.data[0]; ++j) {
+                if (((i >> 2 * (j - 2)) & 0x03) == 0) {
+                    result += equation.data[j];
+                } else if (((i >> 2 * (j - 2)) & 0x03) == 1) {
+                    result *= equation.data[j];
+                } else if (((i >> 2 * (j - 2)) & 0x03) == 2) {
+                    U64 factor = 1;
+                    while (factor <= equation.data[j]) {
+                        factor *= 10;
+                    }
+                    result = result * factor + equation.data[j];
+                } else {
+                    result = 0;
+                    break;
+                }
+            }
+
+            if (result == equation.data[0]) {
+                sum1 += result;
+                break;
+            }
+        }
     }
 
     os_console_print(str8_format(arena, "Part 1: %lu\n", sum0));
