@@ -1,3 +1,6 @@
+// TODO(simon): Try using hash tries for this solution. They could be a really
+// good tool for AoC
+
 global Str8 day11_example = str8_literal(
     "125 17"
 );
