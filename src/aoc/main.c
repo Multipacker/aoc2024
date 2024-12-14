@@ -15,7 +15,6 @@
 #include "src/aoc/day11.c"
 #include "src/aoc/day12.c"
 #include "src/aoc/day13.c"
->>>>>>> af0c85e (Dev: Solved day 13, algebra my beloved!)
 
 internal S32 os_run(Str8List arguments) {
     day1_solve();
