@@ -16,6 +16,7 @@
 #include "src/aoc/day12.c"
 #include "src/aoc/day13.c"
 #include "src/aoc/day14.c"
+#include "src/aoc/day15.c"
 
 internal S32 os_run(Str8List arguments) {
     day1_solve();
@@ -31,6 +32,7 @@ internal S32 os_run(Str8List arguments) {
     day11_solve();
     day12_solve();
     day13_solve();
-    day14_solve();
+    //day14_solve();
+    day15_solve();
     return 0;
 }
