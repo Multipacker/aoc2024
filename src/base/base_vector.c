@@ -355,6 +355,15 @@ internal V2S64 v2s64_subtract(V2S64 a, V2S64 b) {
     return result;
 }
 
+internal V2S64 v2s64_scale(V2S64 vector, S64 scale) {
+    V2S64 result = { 0 };
+
+    result.x = scale * vector.x;
+    result.y = scale * vector.y;
+
+    return result;
+}
+
 internal V2S64 v2s64_min(V2S64 a, V2S64 b) {
     V2S64 result = { 0 };
 

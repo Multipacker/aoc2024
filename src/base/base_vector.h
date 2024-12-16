@@ -264,6 +264,7 @@ internal V2S32 v2s32_max(V2S32 a, V2S32 b);
 internal V2S64 v2s64(S64 x, S64 y);
 internal V2S64 v2s64_add(V2S64 a, V2S64 b);
 internal V2S64 v2s64_subtract(V2S64 a, V2S64 b);
+internal V2S64 v2s64_scale(V2S64 vector, S64 scale);
 internal V2S64 v2s64_min(V2S64 a, V2S64 b);
 internal V2S64 v2s64_max(V2S64 a, V2S64 b);
 
