@@ -2,17 +2,19 @@ global Str8 day9_example = str8_literal(
     "2333133121414131402"
 );
 
-typedef struct V2U64Node V2U64Node;
-struct V2U64Node {
-    V2U64Node *next;
-    V2U64Node *previous;
-    V2U64 value;
+typedef struct Day9Node Day9Node;
+struct Day9Node {
+    Day9Node *next;
+    Day9Node *previous;
+    U64 position;
+    U64 value;
+    U64 size;
 };
 
-typedef struct V2U64List V2U64List;
-struct V2U64List {
-    V2U64Node *first;
-    V2U64Node *last;
+typedef struct Day9List Day9List;
+struct Day9List {
+    Day9Node *first;
+    Day9Node *last;
 };
 
 internal Void day9_solve(Void) {
@@ -22,7 +24,10 @@ internal Void day9_solve(Void) {
     os_file_read(arena, str8_literal("data/day9.txt"), &data);
     U32 *ids0 = arena_push_array_zero(arena, U32, data.size * 9);
     U32 id0_count = 0;
-    V2U64List blocks = { 0 };
+
+    U64 position = 0;
+    Day9List filled = { 0 };
+    Day9List empty = { 0 };
 
     // NOTE(simon): Decompress
     for (U64 i = 0; i < data.size && is_digit(data.data[i]); ++i) {
@@ -32,10 +37,17 @@ internal Void day9_solve(Void) {
             ids0[id0_count++] = (U32) id;
         }
 
-        V2U64Node *node = arena_push_struct_zero(arena, V2U64Node);
-        node->value.x = id;
-        node->value.y = count;
-        dll_push_back(blocks.first, blocks.last, node);
+        Day9Node *node = arena_push_struct_zero(arena, Day9Node);
+        node->position = position;
+        node->value = id;
+        node->size = count;
+        position += count;
+
+        if (node->value) {
+            dll_push_back(filled.first, filled.last, node);
+        } else {
+            dll_push_back(empty.first, empty.last, node);
+        }
     }
 
     // NOTE(simon): Fragment
@@ -52,29 +64,23 @@ internal Void day9_solve(Void) {
     }
 
     // NOTE(simon): Defragment
-    for (V2U64Node *file = blocks.last; file; file = file->previous) {
-        if (!file->value.x) {
-            continue;
-        }
-
-        V2U64Node *selected = 0;
-        for (V2U64Node *free = blocks.first; free != file; free = free->next) {
-            if (!free->value.x && free->value.y >= file->value.y) {
+    for (Day9Node *file = filled.last; file; file = file->previous) {
+        Day9Node *selected = 0;
+        for (Day9Node *free = empty.first; free && free->position < file->position; free = free->next) {
+            if (free->size >= file->size) {
                 selected = free;
                 break;
             }
         }
 
         if (selected) {
-            if (selected->value.y == file->value.y) {
-                selected->value.x = file->value.x;
-            } else {
-                V2U64Node *new = arena_push_struct_zero(arena, V2U64Node);
-                new->value = file->value;
-                selected->value.y -= new->value.y;
-                dll_insert_before(blocks.first, blocks.last, selected, new);
+            file->position = selected->position;
+            selected->position += file->size;
+            selected->size -= file->size;
+
+            if (!selected->size) {
+                dll_remove(empty.first, empty.last, selected);
             }
-            file->value.x = 0;
         }
     }
 
@@ -85,15 +91,12 @@ internal Void day9_solve(Void) {
     }
 
     U64 checksum1 = 0;
-    U64 position = 0;
-    for (V2U64Node *file = blocks.first; file; file = file->next) {
-        if (file->value.x) {
-            for (U64 i = 0; i < file->value.y; ++i) {
-                checksum1 += (position + i) * (file->value.x - 1);
-            }
+    for (Day9Node *file = filled.first; file; file = file->next) {
+        if (file->value) {
+            U64 file_position_sum = file->size * (file->size - 1) / 2;
+            U64 system_position_sum = file_position_sum + file->position * file->size;
+            checksum1 += system_position_sum * (file->value - 1);
         }
-
-        position += file->value.y;
     }
 
     os_console_print(str8_format(arena, "Part 1: %lu\n", checksum0));
