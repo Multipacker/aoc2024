@@ -22,6 +22,8 @@ internal U64 day7_iterate0(U64 accumulator, U64Array equation, U64 index) {
 internal U64 day7_iterate1(U64 accumulator, U64Array equation, U64 index) {
     if (index == equation.size) {
         return accumulator == equation.data[0];
+    } else if (accumulator > equation.data[0]) {
+        return false;
     }
 
     U64 factor = 1;
@@ -40,36 +42,18 @@ internal Void day7_solve(Void) {
     Str8 data = day7_example;
     os_file_read(arena, str8_literal("data/day7.txt"), &data);
 
-    U64ArrayList equations = { 0 };
-
+    U64 sum0 = 0;
+    U64 sum1 = 0;
     for (Str8Node *line = str8_split_by_codepoints(arena, data, str8_literal("\n")).first; line; line = line->next) {
-        Arena_Temporary scratch = arena_get_scratch(0, 0);
-        Str8 equation_node = line->string;
-
-        U64Parse wanted = u64_from_str8(equation_node);
-        Str8List operand_nodes = str8_split_by_codepoints(scratch.arena, str8_skip(equation_node, wanted.size + 2), str8_literal(" "));
+        Str8List operand_nodes = str8_split_by_codepoints(arena, line->string, str8_literal(" "));
 
         U64Array equation = { 0 };
-        equation.data = arena_push_array(arena, U64, 1 + operand_nodes.node_count);
-        equation.data[equation.size] = wanted.value;
-        ++equation.size;
+        equation.data = arena_push_array(arena, U64, operand_nodes.node_count);
 
         for (Str8Node *operand = operand_nodes.first; operand; operand = operand->next) {
             equation.data[equation.size] = u64_from_str8(operand->string).value;
             ++equation.size;
         }
-
-        U64ArrayNode *node = arena_push_struct_zero(arena, U64ArrayNode);
-        node->value = equation;
-        sll_queue_push(equations.first, equations.last, node);
-
-        arena_end_temporary(scratch);
-    }
-
-    U64 sum0 = 0;
-    U64 sum1 = 0;
-    for (U64ArrayNode *equation_node = equations.first; equation_node; equation_node = equation_node->next) {
-        U64Array equation = equation_node->value;
 
         if (day7_iterate0(equation.data[1], equation, 2)) {
             sum0 += equation.data[0];
