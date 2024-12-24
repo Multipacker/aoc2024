@@ -72,11 +72,15 @@ internal Void day5_solve(Void) {
     os_file_read(arena, str8_literal("data/day5.txt"), &data);
 
     // NOTE(simon): Parse
-    U64TupleList rules = { 0 };
     U64ArrayList updates = { 0 };
 
     B32 is_updates = false;
-    for (Str8Node *node = str8_split_by_codepoints(arena, data, str8_literal("\n")).first; node; node = node->next) {
+    Str8List lines = str8_split_by_codepoints(arena, data, str8_literal("\n"));
+
+    U64Tuple *rules = arena_push_array_zero(arena, U64Tuple, lines.node_count);
+    U64 rule_count = 0;
+
+    for (Str8Node *node = lines.first; node; node = node->next) {
         Arena_Temporary scratch = arena_get_scratch(0, 0);
         if (node->string.size == 0) {
             is_updates = true;
@@ -91,11 +95,10 @@ internal Void day5_solve(Void) {
 
             sll_queue_push(updates.first, updates.last, pages);
         } else {
-            U64TupleNode *rule = arena_push_struct_zero(arena, U64TupleNode);
             Str8List parts = str8_split_by_codepoints(scratch.arena, node->string, str8_literal("|"));
-            rule->value.a = u64_from_str8(parts.first->string).value;
-            rule->value.b = u64_from_str8(parts.last->string).value;
-            sll_queue_push(rules.first, rules.last, rule);
+            rules[rule_count].a = u64_from_str8(parts.first->string).value;
+            rules[rule_count].b = u64_from_str8(parts.last->string).value;
+            ++rule_count;
         }
         arena_end_temporary(scratch);
     }
@@ -111,10 +114,11 @@ internal Void day5_solve(Void) {
                 U64 a = pages.data[j - 1];
                 U64 b = pages.data[j - 0];
 
-                for (U64TupleNode *rule = rules.first; rule; rule = rule->next) {
-                    if (rule->value.a == b && rule->value.b == a) {
+                for (U64 k = 0; k < rule_count; ++k) {
+                    if (rules[k].a == b && rules[k].b == a) {
                         swap(pages.data[j - 1], pages.data[j], U64);
                         is_ordered = false;
+                        break;
                     }
                 }
             }
