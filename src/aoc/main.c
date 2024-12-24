@@ -26,12 +26,12 @@ internal S32 os_run(Str8List arguments) {
     day3_solve();
     day4_solve();
     day5_solve();
-    day6_solve();
+    day6_solve(); // TODO: Optimize
     day7_solve();
     day8_solve();
     day9_solve();
     day10_solve();
-    day11_solve();
+    day11_solve(); // TODO: Optimize
     day12_solve();
     day13_solve();
     //day14_solve();
