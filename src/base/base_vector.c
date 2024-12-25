@@ -998,6 +998,15 @@ internal R2S64 r2s64(S64 min_x, S64 min_y, S64 max_x, S64 max_y) {
     return result;
 }
 
+internal R2S64 r2s64_from_position_size(V2S64 position, V2S64 size) {
+    R2S64 result = { 0 };
+
+    result.min = position;
+    result.max = v2s64_add(position, size);
+
+    return result;
+}
+
 internal B32 r2s64_contains(R2S64 bounds, V2S64 point) {
     B32 contains_x = bounds.min.x <= point.x && point.x < bounds.max.x;
     B32 contains_y = bounds.min.y <= point.y && point.y < bounds.max.y;
